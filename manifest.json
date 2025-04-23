@@ -1,7 +1,7 @@
 {
   "id": "tomato-clock",
   "name": "Tomato Clock",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "minAppVersion": "0.15.0",
   "description": "Pomodoro timer and focus tracking for Obsidian",
   "author": "maigamo",
