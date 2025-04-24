@@ -6,6 +6,11 @@ import { t } from '../i18n';
 export type TimerState = 'idle' | 'work' | 'shortBreak' | 'longBreak' | 'paused';
 export type TimerType = 'work' | 'shortBreak' | 'longBreak';
 
+// 添加WebKit AudioContext类型声明
+interface WebKitWindow extends Window {
+  webkitAudioContext: typeof AudioContext;
+}
+
 /**
  * 番茄钟计时器类
  */
@@ -277,46 +282,54 @@ export class PomodoroTimer {
    * 播放声音
    */
   private playSound(): void {
-    if (this.plugin.settings.soundEnabled) {
-      try {
-        // 创建音频上下文
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        
-        // 创建振荡器
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        // 连接节点
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        // 设置音量
-        gainNode.gain.value = this.plugin.settings.soundVolume;
-        
-        // 设置音色（根据当前状态）
-        if (this.state === 'work') {
-          // 工作结束：较高音调
-          oscillator.type = 'sine';
-          oscillator.frequency.value = 800;
-        } else {
-          // 休息结束：较低音调
-          oscillator.type = 'sine';
-          oscillator.frequency.value = 600;
-        }
-        
-        // 播放声音
-        oscillator.start();
-        
-        // 0.5秒后停止
-        setTimeout(() => {
-          oscillator.stop();
-          // 释放资源
-          oscillator.disconnect();
-          gainNode.disconnect();
-        }, 500);
-      } catch (e) {
-        console.error('播放声音失败:', e);
+    if (!this.plugin.settings.soundEnabled) return;
+    
+    try {
+      // 使用更明确的类型转换
+      const AudioContextClass = window.AudioContext || 
+        (('webkitAudioContext' in window) ? (window as unknown as WebKitWindow).webkitAudioContext : null);
+      
+      if (!AudioContextClass) {
+        console.error('AudioContext 不可用');
+        return;
       }
+      
+      const audioContext = new AudioContextClass();
+      
+      // 创建振荡器
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      // 连接节点
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // 设置音量
+      gainNode.gain.value = this.plugin.settings.soundVolume;
+      
+      // 设置音色（根据当前状态）
+      if (this.state === 'work') {
+        // 工作结束：较高音调
+        oscillator.type = 'sine';
+        oscillator.frequency.value = 800;
+      } else {
+        // 休息结束：较低音调
+        oscillator.type = 'sine';
+        oscillator.frequency.value = 600;
+      }
+      
+      // 播放声音
+      oscillator.start();
+      
+      // 0.5秒后停止
+      setTimeout(() => {
+        oscillator.stop();
+        // 释放资源
+        oscillator.disconnect();
+        gainNode.disconnect();
+      }, 500);
+    } catch (error) {
+      console.error('播放声音失败:', error);
     }
   }
 

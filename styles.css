@@ -652,4 +652,45 @@
   border-radius: 8px;
   display: flex;
   align-items: center;
+}
+
+/* 统计视图的容器样式 */
+.tomato-clock-view .view-content {
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* 工具栏容器样式 */
+.tomato-clock-tools-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+/* 按钮样式 */
+.tomato-clock-cleanup-button {
+  background-color: var(--text-error-hover);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tomato-clock-cleanup-button:hover {
+  background-color: var(--text-error);
+}
+
+.tomato-clock-cleanup-button:active {
+  background-color: var(--text-error-hover);
+}
+
+/* 隐藏元素 */
+.tomato-clock-hidden {
+  display: none;
 } 

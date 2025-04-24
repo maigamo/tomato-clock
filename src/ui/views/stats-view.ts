@@ -43,10 +43,7 @@ export class StatsView extends ItemView {
   }
 
   async onOpen(): Promise<void> {
-    // 确保容器没有顶部内边距
-    this.containerEl.style.padding = "0";
-    this.containerEl.style.margin = "0"; 
-    this.containerEl.style.overflow = "hidden";
+    // 使用CSS类代替内联样式
     this.containerEl.addClass('tomato-clock-view');
     
     // 清空contentEl现有内容
@@ -337,10 +334,6 @@ export class StatsView extends ItemView {
       
       // 创建工具区域容器
       const toolsContainer = this.statsEl.createDiv({ cls: 'tomato-clock-tools-container' });
-      toolsContainer.style.display = 'flex';
-      toolsContainer.style.justifyContent = 'space-between';
-      toolsContainer.style.alignItems = 'center';
-      toolsContainer.style.marginBottom = '16px';
       
       // 创建导出按钮
       const exportContainer = toolsContainer.createDiv({ cls: 'tomato-clock-export-container' });
@@ -350,25 +343,8 @@ export class StatsView extends ItemView {
       const cleanupContainer = toolsContainer.createDiv({ cls: 'tomato-clock-cleanup-container' });
       
       const cleanupButton = cleanupContainer.createEl('button', { 
-        cls: 'tomato-clock-button tomato-clock-cleanup-btn',
+        cls: 'tomato-clock-button tomato-clock-cleanup-button',
         text: t().stats.confirmCleanup?.split('?')[0] || '清理旧数据' 
-      });
-      cleanupButton.style.backgroundColor = 'var(--text-error-hover)';
-      cleanupButton.style.color = 'white';
-      cleanupButton.style.border = 'none';
-      cleanupButton.style.padding = '6px 12px';
-      cleanupButton.style.borderRadius = '4px';
-      cleanupButton.style.cursor = 'pointer';
-      cleanupButton.style.display = 'flex';
-      cleanupButton.style.alignItems = 'center';
-      cleanupButton.style.gap = '5px';
-      
-      // 当鼠标悬停时变暗一些
-      cleanupButton.addEventListener('mouseover', () => {
-        cleanupButton.style.backgroundColor = 'var(--text-error)';
-      });
-      cleanupButton.addEventListener('mouseout', () => {
-        cleanupButton.style.backgroundColor = 'var(--text-error-hover)';
       });
       
       setIcon(cleanupButton.createSpan({ cls: 'tomato-clock-btn-icon' }), 'trash-2');

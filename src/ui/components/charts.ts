@@ -47,7 +47,7 @@ export function createDailyPomodoroChart(
   endDate: Date
 ): Chart | null {
   // 清空容器
-  container.innerHTML = '';
+  container.empty();
   
   // 创建canvas元素
   const canvas = document.createElement('canvas');
@@ -150,7 +150,7 @@ export function createDailyFocusChart(
   endDate: Date
 ): Chart | null {
   // 清空容器
-  container.innerHTML = '';
+  container.empty();
   
   // 创建canvas元素
   const canvas = document.createElement('canvas');
@@ -253,7 +253,7 @@ export function createPomodoroTypeChart(
   sessions: PomodoroSession[]
 ): Chart | null {
   // 清空容器
-  container.innerHTML = '';
+  container.empty();
   
   // 创建canvas元素
   const canvas = document.createElement('canvas');
@@ -267,23 +267,19 @@ export function createPomodoroTypeChart(
     return null;
   }
   
-  // 统计各类型会话数量
+  // 准备数据
   let workCount = 0;
   let shortBreakCount = 0;
   let longBreakCount = 0;
   
   for (const session of sessions) {
     if (session.completed) {
-      switch (session.type) {
-        case 'work':
-          workCount++;
-          break;
-        case 'shortBreak':
-          shortBreakCount++;
-          break;
-        case 'longBreak':
-          longBreakCount++;
-          break;
+      if (session.type === 'work') {
+        workCount++;
+      } else if (session.type === 'shortBreak') {
+        shortBreakCount++;
+      } else if (session.type === 'longBreak') {
+        longBreakCount++;
       }
     }
   }
@@ -295,7 +291,11 @@ export function createPomodoroTypeChart(
   return new Chart(ctx, {
     type: 'pie',
     data: {
-      labels: [t().stats.work, t().stats.shortBreak, t().stats.longBreak],
+      labels: [
+        t().stats.work || '工作',
+        t().stats.shortBreak || '短休息',
+        t().stats.longBreak || '长休息'
+      ],
       datasets: [{
         data: [workCount, shortBreakCount, longBreakCount],
         backgroundColor: [
@@ -328,7 +328,7 @@ export function createPomodoroTypeChart(
 }
 
 /**
- * 创建时间分布图
+ * 创建时间分布图表
  * @param container 容器元素
  * @param pomodoroSessions 番茄钟会话数据
  * @param focusSessions 专注会话数据
@@ -343,7 +343,7 @@ export function createTimeDistributionChart(
   endDate: Date
 ): Chart | null {
   // 清空容器
-  container.innerHTML = '';
+  container.empty();
   
   // 创建canvas元素
   const canvas = document.createElement('canvas');
@@ -357,25 +357,25 @@ export function createTimeDistributionChart(
     return null;
   }
   
-  // 准备小时标签和数据
-  const hourLabels = Array.from(Array(24).keys()).map(hour => `${hour}:00`);
-  const workData = Array(24).fill(0);
+  // 准备数据
+  const hourLabels = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+  const pomodoroData = Array(24).fill(0);
   const focusData = Array(24).fill(0);
   
-  // 统计番茄钟工作时段分布
+  // 统计番茄钟分布
   for (const session of pomodoroSessions) {
-    if (session.type === 'work' && session.completed) {
+    if (session.completed && session.type === 'work') {
       const sessionDate = new Date(session.startTime);
       const hour = sessionDate.getHours();
-      workData[hour]++;
+      pomodoroData[hour]++;
     }
   }
   
-  // 统计专注时段分布
+  // 统计专注会话分布（小时）
   for (const session of focusSessions) {
     const sessionDate = new Date(session.startTime);
     const hour = sessionDate.getHours();
-    // 使用时长的分数表示（小时）
+    // 累加专注时间（小时）
     focusData[hour] += session.duration / (1000 * 60 * 60);
   }
   
@@ -384,26 +384,24 @@ export function createTimeDistributionChart(
   if (!ctx) return null;
   
   return new Chart(ctx, {
-    type: 'line',
+    type: 'bar',
     data: {
       labels: hourLabels,
       datasets: [
         {
           label: t().stats.workSessions,
-          data: workData,
-          backgroundColor: 'rgba(255, 99, 132, 0.5)',
-          borderColor: 'rgb(255, 99, 132)',
-          borderWidth: 2,
-          tension: 0.1,
+          data: pomodoroData,
+          backgroundColor: CHART_COLORS.work.backgroundColor,
+          borderColor: CHART_COLORS.work.borderColor,
+          borderWidth: 1,
           yAxisID: 'y'
         },
         {
           label: t().stats.focusDuration,
           data: focusData,
-          backgroundColor: 'rgba(75, 192, 192, 0.5)',
-          borderColor: 'rgb(75, 192, 192)',
-          borderWidth: 2,
-          tension: 0.1,
+          backgroundColor: CHART_COLORS.focus.backgroundColor,
+          borderColor: CHART_COLORS.focus.borderColor,
+          borderWidth: 1,
           yAxisID: 'y1'
         }
       ]
@@ -416,24 +414,21 @@ export function createTimeDistributionChart(
           type: 'linear',
           display: true,
           position: 'left',
+          beginAtZero: true,
           title: {
             display: true,
             text: t().stats.workSessions
-          },
-          beginAtZero: true,
-          ticks: {
-            precision: 0
           }
         },
         y1: {
           type: 'linear',
           display: true,
           position: 'right',
+          beginAtZero: true,
           title: {
             display: true,
             text: t().stats.focusDuration
           },
-          beginAtZero: true,
           grid: {
             drawOnChartArea: false
           }
@@ -464,82 +459,77 @@ export function createExportButton(
   focusSessions: FocusSession[]
 ): void {
   // 清空容器
-  container.innerHTML = '';
+  container.empty();
   
-  // 创建导出CSV按钮
-  const exportButton = document.createElement('button');
-  exportButton.className = 'tomato-clock-export-btn';
-  setIcon(exportButton, 'download');
-  exportButton.append(document.createTextNode(t().stats.exportData));
+  // 如果没有数据，则不显示导出按钮
+  if (pomodoroSessions.length === 0 && focusSessions.length === 0) {
+    return;
+  }
   
-  exportButton.addEventListener('click', () => {
-    try {
-      // 生成数据
-      const lines = [];
-      
-      // 添加标题行
-      lines.push(`${t().stats.type},${t().stats.date},${t().stats.startTime},${t().stats.duration},${t().stats.note}`);
-      
-      // 添加番茄钟数据
-      for (const session of pomodoroSessions) {
-        const startDate = new Date(session.startTime);
-        const endDate = new Date(session.endTime);
-        
-        const dateStr = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
-        const startTimeStr = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`;
-        const endTimeStr = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
-        
-        const durationMinutes = session.duration / (1000 * 60);
-        
-        lines.push(`${t().plugin.name}-${t().stats[session.type]},${dateStr},${startTimeStr},${endTimeStr},${durationMinutes.toFixed(1)},${session.completed ? t().stats.completed : ''}`);
-      }
-      
-      // 添加专注会话数据
-      for (const session of focusSessions) {
-        const startDate = new Date(session.startTime);
-        const endDate = new Date(session.endTime);
-        
-        const dateStr = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
-        const startTimeStr = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`;
-        const endTimeStr = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
-        
-        const durationMinutes = session.duration / (1000 * 60);
-        
-        lines.push(`${t().stats.focusMode},${dateStr},${startTimeStr},${endTimeStr},${durationMinutes.toFixed(1)},${session.noteId || ''}`);
-      }
-      
-      // 生成CSV内容
-      const csvContent = lines.join('\n');
-      
-      // 创建Blob对象
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      
-      // 创建下载链接
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      
-      // 当前日期作为文件名
-      const today = new Date();
-      const fileName = `tomato_clock_stats_${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}.csv`;
-      
-      link.setAttribute('href', url);
-      link.setAttribute('download', fileName);
-      link.style.display = 'none';
-      
-      // 添加到文档并点击
-      document.body.append(link);
-      link.click();
-      
-      // 清理
-      document.body.removeChild(link);
+  // 创建导出按钮
+  const exportBtn = document.createElement('button');
+  exportBtn.className = 'tomato-clock-export-btn';
+  exportBtn.textContent = t().stats.exportData;
+  setIcon(exportBtn.createSpan({ cls: 'tomato-clock-btn-icon' }), 'download');
+  container.append(exportBtn);
+  
+  // 导出按钮点击事件
+  exportBtn.addEventListener('click', () => {
+    // 生成CSV内容
+    const pomodoroCSV = convertToCSV(pomodoroSessions, true);
+    const focusCSV = convertToCSV(focusSessions, false);
+    
+    // 创建Blob对象
+    const blob = new Blob([pomodoroCSV, '\n\n', focusCSV], { type: 'text/csv;charset=utf-8;' });
+    
+    // 创建下载链接
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `tomato-clock-data-${new Date().toISOString().slice(0, 10)}.csv`);
+    link.classList.add('tomato-clock-hidden');
+    container.append(link);
+    
+    // 触发下载
+    link.click();
+    
+    // 清理URL对象
+    setTimeout(() => {
       URL.revokeObjectURL(url);
-      
-      new Notice('数据导出成功');
-    } catch (error) {
-      console.error('导出数据失败:', error);
-      new Notice('导出数据失败');
-    }
+      link.remove();
+    }, 100);
+    
+    // 显示通知
+    new Notice('数据导出成功');
   });
+}
+
+/**
+ * 将数据转换为CSV格式
+ * @param data 数据
+ * @param isPomodoro 是否为番茄钟数据
+ * @returns CSV格式的字符串
+ */
+function convertToCSV(data: PomodoroSession[] | FocusSession[], isPomodoro: boolean): string {
+  if (data.length === 0) return '';
   
-  container.append(exportButton);
+  // 设置CSV标题行
+  let csvContent = isPomodoro
+    ? `${t().stats.type},${t().stats.startTime},${'结束时间'},${t().stats.duration},${t().stats.completed}\n`
+    : `${t().stats.startTime},${'结束时间'},${t().stats.duration}\n`;
+  
+  // 添加数据行
+  for (const item of data) {
+    if (isPomodoro) {
+      const session = item as PomodoroSession;
+      const endTimeStr = session.endTime ? new Date(session.endTime).toISOString() : '';
+      csvContent += `${session.type},${new Date(session.startTime).toISOString()},${endTimeStr},${session.duration},${session.completed}\n`;
+    } else {
+      const session = item as FocusSession;
+      const endTime = new Date(session.startTime + session.duration);
+      csvContent += `${new Date(session.startTime).toISOString()},${endTime.toISOString()},${session.duration}\n`;
+    }
+  }
+  
+  return csvContent;
 } 
