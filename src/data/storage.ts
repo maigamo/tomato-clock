@@ -34,6 +34,15 @@ export interface StorageData {
 }
 
 /**
+ * 调试日志函数，仅在开发环境中输出
+ */
+function debugLog(...args: any[]) {
+  if (process.env.NODE_ENV === 'development') {
+    console.log(...args);
+  }
+}
+
+/**
  * 数据存储管理
  */
 export class DataStorage {
@@ -87,7 +96,7 @@ export class DataStorage {
             pomodoroSessions: savedData.pomodoroSessions || [],
             focusSessions: savedData.focusSessions || []
           };
-          console.log('番茄钟数据已从单独文件加载', this.data.pomodoroSessions.length, '条番茄钟记录和', this.data.focusSessions.length, '条专注记录');
+          debugLog('番茄钟数据已从单独文件加载', this.data.pomodoroSessions.length, '条番茄钟记录和', this.data.focusSessions.length, '条专注记录');
           this.isDataLoaded = true;
           return;
         }
@@ -103,11 +112,11 @@ export class DataStorage {
         
         // 迁移完成后，将数据保存到新文件
         await this.save();
-        console.log('番茄钟数据已从旧格式迁移到单独文件');
+        debugLog('番茄钟数据已从旧格式迁移到单独文件');
         this.isDataLoaded = true;
       }
     } catch (error) {
-      console.error('加载番茄钟数据失败:', error);
+      debugLog('加载番茄钟数据失败:', error);
       // 初始化为空数据
       this.data = {
         pomodoroSessions: [],
@@ -136,9 +145,9 @@ export class DataStorage {
       // 将数据保存为JSON
       const dataJson = JSON.stringify(this.data);
       await adapter.write(dataPath, dataJson);
-      console.log('番茄钟数据已保存到单独文件');
+      debugLog('番茄钟数据已保存到单独文件');
     } catch (error) {
-      console.error('保存番茄钟数据失败:', error);
+      debugLog('保存番茄钟数据失败:', error);
     }
   }
 
@@ -157,7 +166,7 @@ export class DataStorage {
     this.sessionCache.pomodoroCache.clear();
     this.sessionCache.focusCache.clear();
     this.lastCacheClear = now;
-    console.log('缓存已清理');
+    debugLog('缓存已清理');
   }
 
   /**
@@ -333,7 +342,7 @@ export class DataStorage {
     if (removedPomodoros > 0 || removedFocus > 0) {
       this.clearExpiredCache();
       await this.save();
-      console.log(`清理了 ${removedPomodoros} 条番茄钟记录和 ${removedFocus} 条专注记录`);
+      debugLog(`清理了 ${removedPomodoros} 条番茄钟记录和 ${removedFocus} 条专注记录`);
     }
   }
 
@@ -360,7 +369,7 @@ export class DataStorage {
       await this.save();
       return true;
     } catch (error) {
-      console.error('导入数据失败:', error);
+      debugLog('导入数据失败:', error);
       return false;
     }
   }

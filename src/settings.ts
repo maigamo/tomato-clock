@@ -28,7 +28,6 @@ export interface TomatoClockSettings {
   
   // 语言设置
   language: Locale;             // 插件语言
-  useSystemLanguage: boolean;   // 是否使用系统语言
 }
 
 /**
@@ -59,5 +58,4 @@ export const DEFAULT_SETTINGS: TomatoClockSettings = {
   
   // 语言设置
   language: 'zh',
-  useSystemLanguage: true,
 } 

@@ -1,4 +1,4 @@
-# 🍅 Tomato Clock for Obsidian
+# 🍅 Tomato Clock
 
 <div align="center">
   
@@ -21,13 +21,13 @@ Tomato Clock is a powerful time management plugin for Obsidian that integrates t
 ## 🖼️ Picture presentation
 
 The content is automatically by default.
-![Tomato Clock for Obsidian illustration0](https://github.com/maigamo/tomato-clock/blob/main/images/tomato_clock_all.PNG)
-![Tomato Clock for Obsidian illustration2](https://github.com/maigamo/tomato-clock/blob/main/images/tomato_clock_chart3.PNG)
+![Tomato Clock illustration](https://github.com/maigamo/tomato-clock/blob/main/images/tomato_clock_all.PNG)
+![Tomato Clock charts](https://github.com/maigamo/tomato-clock/blob/main/images/tomato_clock_chart3.PNG)
 
 
 Setting interface.
-![Tomato Clock for Obsidian illustration3](https://github.com/maigamo/tomato-clock/blob/main/images/tomato_clock_setting1.PNG)
-![Tomato Clock for Obsidian illustration4](https://github.com/maigamo/tomato-clock/blob/main/images/tomato_clock_setting2.PNG)
+![Tomato Clock settings](https://github.com/maigamo/tomato-clock/blob/main/images/tomato_clock_setting1.PNG)
+![Tomato Clock more settings](https://github.com/maigamo/tomato-clock/blob/main/images/tomato_clock_setting2.PNG)
 
 
 ### ✨ Key Features

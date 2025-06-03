@@ -1,7 +1,7 @@
 import { Notice, WorkspaceLeaf } from 'obsidian';
 import TomatoClockPlugin from '../main';
 import { FocusSession } from '../data/storage';
-import { debounce } from '../utils/debounce';
+import { debounce } from 'obsidian';
 import { t } from '../i18n';
 
 export class FocusTracker {

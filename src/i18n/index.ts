@@ -6,6 +6,13 @@ import { zh } from './zh';
 import { en } from './en';
 import { ja } from './ja';
 
+// 全局声明Obsidian应用对象
+declare global {
+  interface Window {
+    app: any;
+  }
+}
+
 export type Locale = 'zh' | 'en' | 'ja';
 
 // 定义所有翻译字符串的类型
@@ -199,18 +206,36 @@ export function t(): Translation {
 
 /**
  * 从系统语言自动设置插件语言
+ * 使用Obsidian API获取系统语言
  */
 export function detectLocale(): Locale {
-  // 获取系统语言
+  try {
+    // 尝试使用Obsidian API获取语言设置
+    if (window.app && window.app.i18n) {
+      const obsidianLang = window.app.i18n.getLanguage().toLowerCase();
+      
+      // 匹配语言
+      if (obsidianLang.startsWith('zh')) {
+        return 'zh';
+      } else if (obsidianLang.startsWith('ja')) {
+        return 'ja';
+      }
+    }
+  } catch (e) {
+    // 忽略错误，使用浏览器语言作为备选
+    console.error('无法获取Obsidian语言设置，使用浏览器语言作为备选', e);
+  }
+  
+  // 获取浏览器语言作为备选
   const systemLang = window.navigator.language.toLowerCase();
   
-  // 简单匹配语言
+  // 匹配语言
   if (systemLang.startsWith('zh')) {
     return 'zh';
   } else if (systemLang.startsWith('ja')) {
     return 'ja';
-  } else {
-    // 默认使用英文
-    return 'en';
   }
+  
+  // 默认使用英文
+  return 'en';
 } 

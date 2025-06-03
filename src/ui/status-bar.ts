@@ -37,7 +37,7 @@ export class StatusBar {
 
   /**
    * 更新状态栏文本
-   * @param status 状态文�?
+   * @param status 状态文本
    * @param time 可选的时间文本
    */
   public updateStatusText(status: string, time?: string): void {
@@ -79,7 +79,7 @@ export class StatusBar {
         break;
     }
     
-    // 当正在计时时，添加时间信�?
+    // 当正在计时时，添加时间信息
     if (timerState !== 'idle') {
       this.updateStatusText(statusText, this.plugin.pomodoroTimer.getFormattedTime());
     } else {
@@ -106,7 +106,7 @@ export class StatusBar {
     
     // 根据当前计时器状态动态添加菜单项
     if (timerState === 'idle') {
-      // 空闲状�?
+      // 空闲状态
       menu.addItem(item => {
         item
           .setTitle(t().commands.startWork)
@@ -134,7 +134,7 @@ export class StatusBar {
           });
       });
     } else if (timerState === 'paused') {
-      // 暂停状�?
+      // 暂停状态
       menu.addItem(item => {
         item
           .setTitle(t().commands.resumePomodoro)
@@ -153,7 +153,7 @@ export class StatusBar {
           });
       });
     } else {
-      // 计时中状�?
+      // 计时中状态
       menu.addItem(item => {
         item
           .setTitle(t().commands.pausePomodoro)
@@ -182,7 +182,7 @@ export class StatusBar {
       });
     }
     
-    // 通用菜单�?
+    // 通用菜单项
     menu.addSeparator();
     
     menu.addItem(item => {
@@ -200,16 +200,6 @@ export class StatusBar {
         .setIcon('bar-chart-2')
         .onClick(() => {
           this.plugin.activateStatsView();
-        });
-    });
-    
-    menu.addItem(item => {
-      item
-        .setTitle('设置')
-        .setIcon('settings')
-        .onClick(() => {
-          // 显示通知提醒用户使用命令面板打开设置
-          new Notice(t().notifications.openSettings || '请通过命令面板(Ctrl/Cmd+P)搜索"番茄钟设�?打开设置');
         });
     });
     

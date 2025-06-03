@@ -21,8 +21,6 @@ export default class TomatoClockPlugin extends Plugin {
     // 初始化语言
     this.initializeLanguage();
     
-    console.log(t().plugin.loading);
-    
     // 初始化数据存储
     this.dataStorage = new DataStorage(this);
     await this.dataStorage.init();
@@ -52,7 +50,6 @@ export default class TomatoClockPlugin extends Plugin {
   }
 
   onunload() {
-    console.log(t().plugin.unloading);
     // 确保计时器被清理
     if (this.pomodoroTimer) {
       this.pomodoroTimer.stop();
@@ -68,10 +65,9 @@ export default class TomatoClockPlugin extends Plugin {
 
   // 初始化语言设置
   private initializeLanguage() {
-    // 如果设置为使用系统语言，则自动检测
-    if (this.settings.useSystemLanguage) {
-      const detectedLocale = detectLocale();
-      this.settings.language = detectedLocale;
+    // 如果语言为空或未定义，则自动检测系统语言
+    if (!this.settings.language) {
+      this.settings.language = detectLocale();
     }
     
     // 设置当前语言
@@ -244,10 +240,11 @@ class TomatoClockSettingTab extends PluginSettingTab {
     containerEl.empty();
     containerEl.addClass('tomato-clock-settings');
 
-    const pomodoroHeader = containerEl.createEl('h2', { text: t().settings.pomodoroSettings });
-    const pomodoroIcon = pomodoroHeader.createSpan({ cls: 'tomato-clock-setting-header-icon' });
-    pomodoroIcon.setAttribute('data-icon', 'clock');
-    setIcon(pomodoroIcon, 'clock');
+    // 番茄钟设置标题
+    new Setting(containerEl)
+      .setName(t().settings.pomodoroSettings)
+      .setHeading()
+      .setClass('tomato-clock-setting-header');
     
     // 番茄钟工作时长设置
     new Setting(containerEl)
@@ -353,10 +350,11 @@ class TomatoClockSettingTab extends PluginSettingTab {
         setIcon(span, 'rotate-ccw');
       });
 
-    const focusHeader = containerEl.createEl('h2', { text: t().settings.focusSettings });
-    const focusIcon = focusHeader.createSpan({ cls: 'tomato-clock-setting-header-icon' });
-    focusIcon.setAttribute('data-icon', 'target');
-    setIcon(focusIcon, 'target');
+    // 专注模式设置标题
+    new Setting(containerEl)
+      .setName(t().settings.focusSettings)
+      .setHeading()
+      .setClass('tomato-clock-setting-header');
     
     // 启用专注模式设置
     new Setting(containerEl)
@@ -413,10 +411,11 @@ class TomatoClockSettingTab extends PluginSettingTab {
         setIcon(span, 'stopwatch');
       });
     
-    const notificationHeader = containerEl.createEl('h2', { text: t().settings.notificationSettings });
-    const notificationIcon = notificationHeader.createSpan({ cls: 'tomato-clock-setting-header-icon' });
-    notificationIcon.setAttribute('data-icon', 'bell');
-    setIcon(notificationIcon, 'bell');
+    // 通知设置标题
+    new Setting(containerEl)
+      .setName(t().settings.notificationSettings)
+      .setHeading()
+      .setClass('tomato-clock-setting-header');
     
     // 声音通知设置
     new Setting(containerEl)
@@ -450,10 +449,11 @@ class TomatoClockSettingTab extends PluginSettingTab {
         setIcon(span, 'message-square');
       });
     
-    const uiHeader = containerEl.createEl('h2', { text: t().settings.uiSettings });
-    const uiIcon = uiHeader.createSpan({ cls: 'tomato-clock-setting-header-icon' });
-    uiIcon.setAttribute('data-icon', 'layout');
-    setIcon(uiIcon, 'layout');
+    // UI设置标题
+    new Setting(containerEl)
+      .setName(t().settings.uiSettings)
+      .setHeading()
+      .setClass('tomato-clock-setting-header');
     
     // 状态栏显示设置
     new Setting(containerEl)
@@ -474,47 +474,12 @@ class TomatoClockSettingTab extends PluginSettingTab {
         setIcon(span, 'bar-chart-horizontal');
       });
         
-    // 添加语言设置
-    const langHeader = containerEl.createEl('h2', { 
-      text: t().settings.languageSettings || '语言设置',
-      attr: { id: 'language-settings-header' }
-    });
-    const langIcon = langHeader.createSpan({ cls: 'tomato-clock-setting-header-icon' });
-    langIcon.setAttribute('data-icon', 'globe');
-    setIcon(langIcon, 'globe');
-    
-    // 使用系统语言
+    // 语言设置标题
     new Setting(containerEl)
-      .setName(t().settings.useSystemLanguage || '使用系统语言')
-      .setDesc(t().settings.useSystemLanguageDesc || '自动根据系统语言设置插件界面语言')
-      .addToggle(toggle => toggle
-        .setValue(this.plugin.settings.useSystemLanguage)
-        .onChange(async (value) => {
-          this.plugin.settings.useSystemLanguage = value;
-          if (value) {
-            // 如果启用系统语言，则自动检测
-            const detectedLocale = detectLocale();
-            this.plugin.settings.language = detectedLocale;
-            setLocale(detectedLocale);
-            
-            // 更新UI
-            this.updateSettingsUI();
-            this.plugin.statusBar.updateUI();
-          }
-          await this.plugin.saveSettings();
-          // 提示需要重新加载
-          new Notice(t().notifications.languageChanged || '语言设置已更改，请重新启动Obsidian以完全应用更改');
-          // 刷新设置界面
-          this.display();
-        }))
-      .setClass('tomato-clock-setting-item')
-      .nameEl.createSpan({ cls: 'tomato-clock-setting-icon' }, (span) => {
-        span.setAttribute('data-icon', 'monitor');
-        setIcon(span, 'monitor');
-      });
+      .setName(t().settings.languageSettings || '语言')
+      .setHeading()
+      .setClass('tomato-clock-setting-header');
     
-    // 只有在未使用系统语言时，才显示语言选择器
-    if (!this.plugin.settings.useSystemLanguage) {
       // 语言选择
       new Setting(containerEl)
         .setName(t().settings.language || '插件语言')
@@ -545,7 +510,6 @@ class TomatoClockSettingTab extends PluginSettingTab {
           span.setAttribute('data-icon', 'flag');
           setIcon(span, 'flag');
         });
-    }
   }
   
   /**
@@ -556,29 +520,29 @@ class TomatoClockSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     
     // 更新所有标题
-    const pomodoroSettingsHeader = containerEl.querySelector('h2:nth-child(1)');
-    if (pomodoroSettingsHeader) {
-      pomodoroSettingsHeader.textContent = t().settings.pomodoroSettings;
+    const settingHeaders = containerEl.querySelectorAll('.setting-item-heading .setting-item-name');
+    settingHeaders.forEach(header => {
+      const text = header.textContent;
+      if (text === t().settings.pomodoroSettings || 
+          text?.includes('Pomodoro') || 
+          text?.includes('番茄')) {
+        header.textContent = t().settings.pomodoroSettings;
+      } else if (text === t().settings.focusSettings || 
+                text?.includes('Focus') || 
+                text?.includes('专注')) {
+        header.textContent = t().settings.focusSettings;
+      } else if (text === t().settings.notificationSettings || 
+                text?.includes('Notification') || 
+                text?.includes('通知')) {
+        header.textContent = t().settings.notificationSettings;
+      } else if (text === t().settings.uiSettings || 
+                text?.includes('UI')) {
+        header.textContent = t().settings.uiSettings;
+      } else if (text === t().settings.languageSettings || 
+                text?.includes('Language') || 
+                text?.includes('语言')) {
+        header.textContent = t().settings.languageSettings;
     }
-    
-    const focusSettingsHeader = containerEl.querySelector('h2:nth-child(4)');
-    if (focusSettingsHeader) {
-      focusSettingsHeader.textContent = t().settings.focusSettings;
-    }
-    
-    const notificationSettingsHeader = containerEl.querySelector('h2:nth-child(7)');
-    if (notificationSettingsHeader) {
-      notificationSettingsHeader.textContent = t().settings.notificationSettings;
-    }
-    
-    const uiSettingsHeader = containerEl.querySelector('h2:nth-child(9)');
-    if (uiSettingsHeader) {
-      uiSettingsHeader.textContent = t().settings.uiSettings;
-    }
-    
-    const languageSettingsHeader = containerEl.querySelector('#language-settings-header');
-    if (languageSettingsHeader) {
-      languageSettingsHeader.textContent = t().settings.languageSettings || '语言设置';
-    }
+    });
   }
 } 
