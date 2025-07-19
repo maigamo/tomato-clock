@@ -11,19 +11,19 @@ export const en: Translation = {
   },
   
   commands: {
-    startWork: 'Start pomodoro work',
-    startShortBreak: 'Start short break',
-    startLongBreak: 'Start long break',
-    pausePomodoro: 'Pause pomodoro',
-    resumePomodoro: 'Resume pomodoro',
-    stopPomodoro: 'Stop pomodoro',
-    skipPomodoro: 'Skip current pomodoro phase',
-    resetCycle: 'Reset pomodoro cycle',
-    startFocus: 'Start focus session',
-    pauseFocus: 'Pause focus session',
-    resumeFocus: 'Resume focus session',
-    endFocus: 'End focus session',
-    openStats: 'Open tomato clock statistics'
+    startWork: 'Start Pomodoro Work',
+    startShortBreak: 'Start Short Break',
+    startLongBreak: 'Start Long Break',
+    pausePomodoro: 'Pause Pomodoro',
+    resumePomodoro: 'Resume Pomodoro',
+    stopPomodoro: 'Stop Pomodoro',
+    skipPomodoro: 'Skip Current Pomodoro Phase',
+    resetCycle: 'Reset Pomodoro Cycle',
+    startFocus: 'Start Focus Session',
+    pauseFocus: 'Pause Focus Session',
+    resumeFocus: 'Resume Focus Session',
+    endFocus: 'End Focus Session',
+    openStats: 'Open Tomato Clock Statistics'
   },
   
   notifications: {
@@ -50,20 +50,20 @@ export const en: Translation = {
   
   statusBar: {
     working: 'Working',
-    shortBreak: 'Short break',
-    longBreak: 'Long break',
+    shortBreak: 'Short Break',
+    longBreak: 'Long Break',
     paused: 'Paused',
     idle: 'Idle',
     focusing: 'Focusing',
-    focusPaused: 'Focus paused'
+    focusPaused: 'Focus Paused'
   },
   
   settings: {
-    pomodoroSettings: 'Pomodoro',
-    focusSettings: 'Focus mode',
-    notificationSettings: 'Notification',
-    uiSettings: 'UI',
-    languageSettings: 'Language',
+    pomodoroSettings: 'Pomodoro Settings',
+    focusSettings: 'Focus Mode Settings',
+    notificationSettings: 'Notification Settings',
+    uiSettings: 'UI Settings',
+    languageSettings: 'Language Settings',
     
     workDuration: 'Work Duration (minutes)',
     workDurationDesc: 'Length of Pomodoro work sessions',
@@ -100,10 +100,10 @@ export const en: Translation = {
   },
   
   stats: {
-    title: 'Tomato clock statistics',
+    title: 'Tomato Clock Statistics',
     today: 'Today',
     yesterday: 'Yesterday',
-    thisWeek: 'Last 7 days',
+    thisWeek: 'Last 7 Days',
     thisMonth: 'Last 30 Days',
     thisYear: 'This Year',
     total: 'Total',

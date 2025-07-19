@@ -5,7 +5,7 @@ import { DataStorage } from './data/storage';
 import { PomodoroTimer } from './timer/pomodoro-timer';
 import { FocusTracker } from './tracker/focus-tracker';
 import { StatsView, STATS_VIEW_TYPE } from './ui/views/stats-view';
-import { t, setLocale, detectLocale, Locale } from './i18n';
+import { t, initializeLanguage } from './i18n';
 
 export default class TomatoClockPlugin extends Plugin {
   settings: TomatoClockSettings;
@@ -18,8 +18,10 @@ export default class TomatoClockPlugin extends Plugin {
     // 加载设置
     await this.loadSettings();
     
-    // 初始化语言
-    this.initializeLanguage();
+    // 初始化语言（现在使用Obsidian的语言设置）
+    initializeLanguage(this.app);
+    
+    console.log(t().plugin.loading);
     
     // 初始化数据存储
     this.dataStorage = new DataStorage(this);
@@ -50,6 +52,7 @@ export default class TomatoClockPlugin extends Plugin {
   }
 
   onunload() {
+    console.log(t().plugin.unloading);
     // 确保计时器被清理
     if (this.pomodoroTimer) {
       this.pomodoroTimer.stop();
@@ -63,17 +66,8 @@ export default class TomatoClockPlugin extends Plugin {
     this.statusBar.dispose();
   }
 
-  // 初始化语言设置
-  private initializeLanguage() {
-    // 如果语言为空或未定义，则自动检测系统语言
-    if (!this.settings.language) {
-      this.settings.language = detectLocale();
-    }
-    
-    // 设置当前语言
-    setLocale(this.settings.language);
-  }
-
+  // 移除不再需要的initializeLanguage方法
+  
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
   }
@@ -240,12 +234,7 @@ class TomatoClockSettingTab extends PluginSettingTab {
     containerEl.empty();
     containerEl.addClass('tomato-clock-settings');
 
-    // 番茄钟设置标题
-    new Setting(containerEl)
-      .setName(t().settings.pomodoroSettings)
-      .setHeading()
-      .setClass('tomato-clock-setting-header');
-    
+    // 直接开始番茄钟设置，不使用h2标题
     // 番茄钟工作时长设置
     new Setting(containerEl)
       .setName(t().settings.workDuration)
@@ -350,12 +339,7 @@ class TomatoClockSettingTab extends PluginSettingTab {
         setIcon(span, 'rotate-ccw');
       });
 
-    // 专注模式设置标题
-    new Setting(containerEl)
-      .setName(t().settings.focusSettings)
-      .setHeading()
-      .setClass('tomato-clock-setting-header');
-    
+    // 专注模式设置区域开始
     // 启用专注模式设置
     new Setting(containerEl)
       .setName(t().settings.focusMode)
@@ -411,12 +395,7 @@ class TomatoClockSettingTab extends PluginSettingTab {
         setIcon(span, 'stopwatch');
       });
     
-    // 通知设置标题
-    new Setting(containerEl)
-      .setName(t().settings.notificationSettings)
-      .setHeading()
-      .setClass('tomato-clock-setting-header');
-    
+    // 通知设置区域开始
     // 声音通知设置
     new Setting(containerEl)
       .setName(t().settings.soundEnabled)
@@ -449,12 +428,7 @@ class TomatoClockSettingTab extends PluginSettingTab {
         setIcon(span, 'message-square');
       });
     
-    // UI设置标题
-    new Setting(containerEl)
-      .setName(t().settings.uiSettings)
-      .setHeading()
-      .setClass('tomato-clock-setting-header');
-    
+    // UI设置区域开始
     // 状态栏显示设置
     new Setting(containerEl)
       .setName(t().settings.showInStatusBar)
@@ -473,43 +447,6 @@ class TomatoClockSettingTab extends PluginSettingTab {
         span.setAttribute('data-icon', 'bar-chart-horizontal');
         setIcon(span, 'bar-chart-horizontal');
       });
-        
-    // 语言设置标题
-    new Setting(containerEl)
-      .setName(t().settings.languageSettings || '语言')
-      .setHeading()
-      .setClass('tomato-clock-setting-header');
-    
-      // 语言选择
-      new Setting(containerEl)
-        .setName(t().settings.language || '插件语言')
-        .setDesc(t().settings.languageDesc || '选择插件界面的显示语言')
-        .addDropdown(dropdown => {
-          dropdown
-            .addOption('zh', '中文')
-            .addOption('en', 'English')
-            .addOption('ja', '日本語')
-            .setValue(this.plugin.settings.language)
-            .onChange(async (value: Locale) => {
-              this.plugin.settings.language = value;
-              setLocale(value);
-              
-              // 更新UI元素
-              this.updateSettingsUI();
-              this.plugin.statusBar.updateUI();
-              
-              await this.plugin.saveSettings();
-              // 提示需要重新加载
-              new Notice(t().notifications.languageChanged || '语言设置已更改，请重新启动Obsidian以完全应用更改');
-              // 刷新设置界面
-              this.display();
-            });
-        })
-        .setClass('tomato-clock-setting-item')
-        .nameEl.createSpan({ cls: 'tomato-clock-setting-icon' }, (span) => {
-          span.setAttribute('data-icon', 'flag');
-          setIcon(span, 'flag');
-        });
   }
   
   /**
@@ -517,32 +454,7 @@ class TomatoClockSettingTab extends PluginSettingTab {
    * 当语言改变时调用此方法
    */
   private updateSettingsUI(): void {
-    const { containerEl } = this;
-    
-    // 更新所有标题
-    const settingHeaders = containerEl.querySelectorAll('.setting-item-heading .setting-item-name');
-    settingHeaders.forEach(header => {
-      const text = header.textContent;
-      if (text === t().settings.pomodoroSettings || 
-          text?.includes('Pomodoro') || 
-          text?.includes('番茄')) {
-        header.textContent = t().settings.pomodoroSettings;
-      } else if (text === t().settings.focusSettings || 
-                text?.includes('Focus') || 
-                text?.includes('专注')) {
-        header.textContent = t().settings.focusSettings;
-      } else if (text === t().settings.notificationSettings || 
-                text?.includes('Notification') || 
-                text?.includes('通知')) {
-        header.textContent = t().settings.notificationSettings;
-      } else if (text === t().settings.uiSettings || 
-                text?.includes('UI')) {
-        header.textContent = t().settings.uiSettings;
-      } else if (text === t().settings.languageSettings || 
-                text?.includes('Language') || 
-                text?.includes('语言')) {
-        header.textContent = t().settings.languageSettings;
-    }
-    });
+    // 由于移除了所有h2标题，这个方法现在主要负责状态栏的更新
+    // 实际的设置项文本会在重新渲染时自动更新
   }
 } 

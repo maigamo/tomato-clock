@@ -1,7 +1,6 @@
 /**
  * 番茄钟插件设置
  */
-import { Locale } from './i18n';
 
 export interface TomatoClockSettings {
   // 番茄钟设置
@@ -25,9 +24,6 @@ export interface TomatoClockSettings {
 
   // UI设置
   showInStatusBar: boolean;     // 是否在状态栏显示
-  
-  // 语言设置
-  language: Locale;             // 插件语言
 }
 
 /**
@@ -55,7 +51,4 @@ export const DEFAULT_SETTINGS: TomatoClockSettings = {
 
   // UI设置
   showInStatusBar: true,
-  
-  // 语言设置
-  language: 'zh',
-} 
+}; 

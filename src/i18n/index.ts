@@ -2,16 +2,10 @@
  * 多语言支持主模块
  */
 
+import { App } from 'obsidian';
 import { zh } from './zh';
 import { en } from './en';
 import { ja } from './ja';
-
-// 全局声明Obsidian应用对象
-declare global {
-  interface Window {
-    app: any;
-  }
-}
 
 export type Locale = 'zh' | 'en' | 'ja';
 
@@ -116,14 +110,14 @@ export interface Translation {
     showInStatusBar: string;
     showInStatusBarDesc: string;
     
-    // 语言设置
+    // 语言设置（已弃用，但保留用于兼容性）
     language: string;
     languageDesc: string;
     useSystemLanguage: string;
     useSystemLanguageDesc: string;
   };
   
-  // 统计视图
+  // 统计面板
   stats: {
     title: string;
     today: string;
@@ -179,10 +173,46 @@ const translations: Record<Locale, Translation> = {
 };
 
 // 当前语言
-let currentLocale: Locale = 'zh';
+let currentLocale: Locale = 'en';
 
 /**
- * 设置当前语言
+ * 初始化语言系统
+ * @param app Obsidian App实例（保留参数用于兼容性）
+ */
+export function initializeLanguage(app: App) {
+  // 使用localStorage获取Obsidian的语言设置
+  const obsidianLanguage = getObsidianLanguage();
+  currentLocale = mapObsidianLanguageToLocale(obsidianLanguage);
+}
+
+/**
+ * 获取Obsidian的语言设置
+ */
+function getObsidianLanguage(): string {
+  // 从localStorage获取语言设置
+  const lang = window.localStorage.getItem('language');
+  // 如果为null，则默认为英文
+  return lang || 'en';
+}
+
+/**
+ * 将Obsidian的语言代码映射到插件的语言代码
+ */
+function mapObsidianLanguageToLocale(obsidianLang: string): Locale {
+  // Obsidian的语言代码映射
+  if (obsidianLang.startsWith('zh')) {
+    return 'zh';
+  } else if (obsidianLang.startsWith('ja')) {
+    return 'ja';
+  } else {
+    // 默认使用英文
+    return 'en';
+  }
+}
+
+/**
+ * 设置当前语言（已弃用，保留用于向后兼容）
+ * @deprecated 使用Obsidian的语言设置
  */
 export function setLocale(locale: Locale) {
   if (translations[locale]) {
@@ -194,6 +224,9 @@ export function setLocale(locale: Locale) {
  * 获取当前语言
  */
 export function getLocale(): Locale {
+  // 始终从Obsidian获取最新的语言设置
+  const obsidianLanguage = getObsidianLanguage();
+  currentLocale = mapObsidianLanguageToLocale(obsidianLanguage);
   return currentLocale;
 }
 
@@ -201,41 +234,27 @@ export function getLocale(): Locale {
  * 获取翻译
  */
 export function t(): Translation {
+  // 确保使用最新的语言设置
+  const obsidianLanguage = getObsidianLanguage();
+  currentLocale = mapObsidianLanguageToLocale(obsidianLanguage);
   return translations[currentLocale];
 }
 
 /**
- * 从系统语言自动设置插件语言
- * 使用Obsidian API获取系统语言
+ * 从系统语言自动设置插件语言（已弃用）
+ * @deprecated 使用Obsidian的语言设置
  */
 export function detectLocale(): Locale {
-  try {
-    // 尝试使用Obsidian API获取语言设置
-    if (window.app && window.app.i18n) {
-      const obsidianLang = window.app.i18n.getLanguage().toLowerCase();
-      
-      // 匹配语言
-      if (obsidianLang.startsWith('zh')) {
-        return 'zh';
-      } else if (obsidianLang.startsWith('ja')) {
-        return 'ja';
-      }
-    }
-  } catch (e) {
-    // 忽略错误，使用浏览器语言作为备选
-    console.error('无法获取Obsidian语言设置，使用浏览器语言作为备选', e);
-  }
-  
-  // 获取浏览器语言作为备选
+  // 获取系统语言
   const systemLang = window.navigator.language.toLowerCase();
   
-  // 匹配语言
+  // 简单匹配语言
   if (systemLang.startsWith('zh')) {
     return 'zh';
   } else if (systemLang.startsWith('ja')) {
     return 'ja';
+  } else {
+    // 默认使用英文
+    return 'en';
   }
-  
-  // 默认使用英文
-  return 'en';
 } 

@@ -1,7 +1,7 @@
 import { Notice, WorkspaceLeaf } from 'obsidian';
 import TomatoClockPlugin from '../main';
 import { FocusSession } from '../data/storage';
-import { debounce } from 'obsidian';
+import { debounce } from '../utils/debounce';
 import { t } from '../i18n';
 
 export class FocusTracker {
@@ -10,7 +10,7 @@ export class FocusTracker {
   private paused: boolean = false;
   private lastActivityTime: number = 0;
   private currentSession: FocusSession | null = null;
-  private inactivityCheckInterval: NodeJS.Timeout | null = null;
+  private inactivityCheckInterval: number | null = null;
   private activeLeaf: WorkspaceLeaf | null = null;
 
   constructor(plugin: TomatoClockPlugin) {
@@ -21,44 +21,57 @@ export class FocusTracker {
    * 初始化专注追踪器
    */
   public init(): void {
-    // 如果未启用专注模式，则不进行初始化
     if (!this.plugin.settings.focusMode) {
       return;
     }
 
-    // 监听活动事件
-    this.registerActivityListeners();
+    // 监听各种活动事件
+    document.addEventListener('keydown', this.handleActivity);
+    document.addEventListener('click', this.handleActivity);
+    document.addEventListener('mousedown', this.handleActivity);
+    document.addEventListener('scroll', this.handleScrollActivity);
+    document.addEventListener('selectstart', this.handleActivity);
+    document.addEventListener('selectionchange', this.handleActivity);
+    document.addEventListener('mousemove', this.handleMouseMoveActivity);
 
-    // 设置不活动检查定时器
+    // 监听Obsidian特定事件
+    const { workspace } = this.plugin.app;
+    workspace.on('active-leaf-change', this.handleLeafChange);
+    workspace.on('file-open', this.handleActivity);
+
+    // 设置不活动检查
     this.setupInactivityCheck();
   }
 
   /**
-   * 注册活动监听器
+   * 开始专注会话
    */
-  private registerActivityListeners(): void {
-    const { workspace } = this.plugin.app;
+  public startSession(): void {
+    if (this.active) {
+      return; // 已经在专注状态
+    }
 
-    // 监听键盘输入
-    document.addEventListener('keydown', this.handleActivity);
+    const now = Date.now();
+    this.active = true;
+    this.paused = false;
+    this.lastActivityTime = now;
 
-    // 监听鼠标点击和按下
-    document.addEventListener('click', this.handleActivity);
-    document.addEventListener('mousedown', this.handleActivity);
+    // 获取当前活跃文件的路径
+    const activeFile = this.plugin.app.workspace.getActiveFile();
+    const noteId = activeFile ? activeFile.path : '';
 
-    // 监听鼠标滚动，使用节流防止频繁触发
-    document.addEventListener('scroll', this.handleScrollActivity);
+    this.currentSession = {
+      id: this.plugin.dataStorage.generateId(),
+      startTime: now,
+      endTime: 0,
+      duration: 0,
+      noteId: noteId
+    };
 
-    // 监听文本选择
-    document.addEventListener('selectstart', this.handleActivity);
-    document.addEventListener('selectionchange', this.handleActivity);
+    // 更新状态栏
+    this.updateStatusBar();
 
-    // 监听鼠标移动，使用防抖
-    document.addEventListener('mousemove', this.handleMouseMoveActivity);
-
-    // 监听笔记操作
-    workspace.on('active-leaf-change', this.handleLeafChange);
-    workspace.on('file-open', this.handleActivity);
+    new Notice(t().notifications.focusStarted);
   }
 
   /**
@@ -105,11 +118,11 @@ export class FocusTracker {
   private setupInactivityCheck(): void {
     // 如果已经有定时器，先清除
     if (this.inactivityCheckInterval) {
-      clearInterval(this.inactivityCheckInterval);
+      window.clearInterval(this.inactivityCheckInterval);
     }
 
     // 每秒检查一次是否不活动
-    this.inactivityCheckInterval = setInterval(() => {
+    this.inactivityCheckInterval = window.setInterval(() => {
       if (!this.active || this.paused) {
         return;
       }
@@ -123,40 +136,6 @@ export class FocusTracker {
         this.endSession();
       }
     }, 1000);
-  }
-
-  /**
-   * 开始专注会话
-   */
-  public startSession(): void {
-    if (this.active) {
-      return;
-    }
-
-    this.active = true;
-    this.paused = false;
-    this.lastActivityTime = Date.now();
-
-    // 创建新会话
-    this.currentSession = {
-      id: this.plugin.dataStorage.generateId(),
-      startTime: this.lastActivityTime,
-      endTime: 0,
-      duration: 0
-    };
-
-    // 如果有活跃的叶子，记录关联笔记
-    if (this.activeLeaf) {
-      const file = this.plugin.app.workspace.getActiveFile();
-      if (file) {
-        this.currentSession.noteId = file.path;
-      }
-    }
-
-    // 更新状态栏图标
-    this.updateStatusBar();
-
-    new Notice(t().notifications.focusStarted);
   }
 
   /**
@@ -182,7 +161,7 @@ export class FocusTracker {
     }
 
     this.paused = false;
-    this.lastActivityTime = Date.now();
+    this.lastActivityTime = Date.now(); // 重置活动时间
     this.updateStatusBar();
 
     new Notice(t().notifications.focusResumed);
@@ -228,44 +207,46 @@ export class FocusTracker {
   }
 
   /**
-   * 格式化持续时间（毫秒转为可读格式）
+   * 格式化时长
+   * @param duration 时长（毫秒）
+   * @returns 格式化的时长字符串
    */
   private formatDuration(duration: number): string {
-    const seconds = Math.floor(duration / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-
-    if (hours > 0) {
-      return `${hours}小时${minutes % 60}分钟`;
-    } else if (minutes > 0) {
-      return `${minutes}分钟${seconds % 60}秒`;
+    const minutes = Math.floor(duration / (1000 * 60));
+    const seconds = Math.floor((duration % (1000 * 60)) / 1000);
+    
+    if (minutes > 0) {
+      return `${minutes}分${seconds}秒`;
     } else {
       return `${seconds}秒`;
     }
   }
 
   /**
-   * 更新状态栏
+   * 获取当前专注状态
+   */
+  public getStatus(): { active: boolean; paused: boolean; duration?: number } {
+    if (!this.active) {
+      return { active: false, paused: false };
+    }
+
+    const duration = this.currentSession 
+      ? Date.now() - this.currentSession.startTime 
+      : 0;
+      
+    return { 
+      active: this.active, 
+      paused: this.paused, 
+      duration 
+    };
+  }
+
+  /**
+   * 更新状态栏显示
    */
   private updateStatusBar(): void {
-    const { statusBar } = this.plugin;
-    if (!statusBar) return;
-
-    // 在番茄钟计时器空闲时才显示专注状态
-    if (this.plugin.pomodoroTimer.getState() === 'idle') {
-      if (this.active) {
-        if (this.paused) {
-          statusBar.updateStatusText(t().statusBar.focusPaused);
-          statusBar.updateIcon('eye-off');
-        } else {
-          statusBar.updateStatusText(t().statusBar.focusing);
-          statusBar.updateIcon('eye');
-        }
-      } else {
-        statusBar.updateStatusText(t().statusBar.idle);
-        statusBar.updateIcon('clock');
-      }
-    }
+    // 由于专注追踪器不直接控制状态栏，这里可以触发插件的状态更新
+    // 实际的状态栏更新由番茄钟计时器控制
   }
 
   /**
@@ -287,7 +268,7 @@ export class FocusTracker {
 
     // 清除定时器
     if (this.inactivityCheckInterval) {
-      clearInterval(this.inactivityCheckInterval);
+      window.clearInterval(this.inactivityCheckInterval);
       this.inactivityCheckInterval = null;
     }
 

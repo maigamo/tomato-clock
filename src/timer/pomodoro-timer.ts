@@ -21,7 +21,7 @@ export class PomodoroTimer {
   private startTime: number = 0;
   private pauseStartTime: number = 0;
   private pausedDuration: number = 0;
-  private timerInterval: NodeJS.Timeout | null = null;
+  private timerInterval: number | null = null;
   private endTime: number = 0;
   private completedWorkSessions: number = 0;
 
@@ -48,12 +48,12 @@ export class PomodoroTimer {
   }
 
   /**
-   * 获取剩余时间格式化为 MM:SS
+   * 获取格式化的剩余时间
    */
   public getFormattedTime(): string {
-    const remainingSeconds = Math.ceil(this.getRemainingTime() / 1000);
-    const minutes = Math.floor(remainingSeconds / 60);
-    const seconds = remainingSeconds % 60;
+    const remainingMs = this.getRemainingTime();
+    const minutes = Math.floor(remainingMs / (1000 * 60));
+    const seconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
 
@@ -77,7 +77,7 @@ export class PomodoroTimer {
   public start(type: TimerType = 'work'): void {
     // 如果已经在计时，先停止
     if (this.timerInterval) {
-      clearInterval(this.timerInterval);
+      window.clearInterval(this.timerInterval);
       this.timerInterval = null;
     }
 
@@ -104,7 +104,7 @@ export class PomodoroTimer {
     this.updateStatusBar();
 
     // 设置计时器
-    this.timerInterval = setInterval(() => this.tick(), 1000);
+    this.timerInterval = window.setInterval(() => this.tick(), 1000);
   }
 
   /**
@@ -124,7 +124,7 @@ export class PomodoroTimer {
       
       // 清除定时器
       if (this.timerInterval) {
-        clearInterval(this.timerInterval);
+        window.clearInterval(this.timerInterval);
         this.timerInterval = null;
       }
       
@@ -153,7 +153,7 @@ export class PomodoroTimer {
       }
       
       // 设置计时器
-      this.timerInterval = setInterval(() => this.tick(), 1000);
+      this.timerInterval = window.setInterval(() => this.tick(), 1000);
       
       // 更新状态栏
       this.updateStatusBar();
@@ -166,7 +166,7 @@ export class PomodoroTimer {
   public stop(): void {
     // 清除定时器
     if (this.timerInterval) {
-      clearInterval(this.timerInterval);
+      window.clearInterval(this.timerInterval);
       this.timerInterval = null;
     }
     
@@ -177,27 +177,24 @@ export class PomodoroTimer {
   }
 
   /**
-   * 跳过当前时段
+   * 跳过当前阶段
    */
   public skip(): void {
-    // 如果是工作时段，记录为已完成
-    if (this.state === 'work' && this.currentSession) {
-      this.currentSession.completed = true;
-      this.currentSession.endTime = Date.now();
-      this.plugin.dataStorage.addPomodoroSession(this.currentSession);
-      this.completedWorkSessions++;
+    if (this.timerInterval) {
+      window.clearInterval(this.timerInterval);
+      this.timerInterval = null;
     }
     
-    // 确定下一个阶段
-    this.determineNextPhase();
+    // 直接触发完成逻辑
+    this.handleCompletion();
   }
 
   /**
-   * 重置循环计数
+   * 重置番茄钟循环
    */
   public resetCycle(): void {
+    this.stop();
     this.completedWorkSessions = 0;
-    new Notice('番茄钟循环已重置');
   }
 
   /**
@@ -211,7 +208,7 @@ export class PomodoroTimer {
     if (Date.now() >= this.endTime) {
       // 清除定时器
       if (this.timerInterval) {
-        clearInterval(this.timerInterval);
+        window.clearInterval(this.timerInterval);
         this.timerInterval = null;
       }
       
@@ -337,57 +334,50 @@ export class PomodoroTimer {
    * 显示通知
    */
   private showNotification(): void {
-    if (this.plugin.settings.notificationEnabled) {
-      let message: string;
-      
-      switch (this.state) {
-        case 'work':
-          message = t().notifications.workCompleted;
-          break;
-        case 'shortBreak':
-          message = t().notifications.shortBreakCompleted;
-          break;
-        case 'longBreak':
-          message = t().notifications.longBreakCompleted;
-          break;
-        default:
-          message = '计时结束！';
-      }
-      
-      new Notice(message);
+    if (!this.plugin.settings.notificationEnabled) return;
+    
+    let message = '';
+    switch (this.state) {
+      case 'work':
+        message = t().notifications.workCompleted;
+        break;
+      case 'shortBreak':
+        message = t().notifications.shortBreakCompleted;
+        break;
+      case 'longBreak':
+        message = t().notifications.longBreakCompleted;
+        break;
+    }
+    
+    if (message) {
+      new Notice(message, 5000);
     }
   }
 
   /**
-   * 更新状态栏
+   * 更新状态栏显示
    */
   private updateStatusBar(): void {
     const { statusBar } = this.plugin;
     if (!statusBar) return;
     
     let statusText: string;
-    let iconName: string;
     
     switch (this.state) {
       case 'work':
         statusText = t().statusBar.working;
-        iconName = 'clock';
         break;
       case 'shortBreak':
         statusText = t().statusBar.shortBreak;
-        iconName = 'coffee';
         break;
       case 'longBreak':
         statusText = t().statusBar.longBreak;
-        iconName = 'coffee';
         break;
       case 'paused':
         statusText = t().statusBar.paused;
-        iconName = 'pause';
         break;
       default:
         statusText = t().statusBar.idle;
-        iconName = 'clock';
         break;
     }
     
@@ -397,7 +387,5 @@ export class PomodoroTimer {
     } else {
       statusBar.updateStatusText(statusText);
     }
-    
-    statusBar.updateIcon(iconName);
   }
 } 
