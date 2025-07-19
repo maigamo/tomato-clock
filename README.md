@@ -6,7 +6,7 @@
 [![GitHub all releases](https://img.shields.io/github/downloads/maigamo/tomato-clock/total)](https://github.com/maigamo/tomato-clock/releases)
 [![GitHub stars](https://img.shields.io/github/stars/maigamo/tomato-clock)](https://github.com/maigamo/tomato-clock/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/maigamo/tomato-clock)](https://github.com/maigamo/tomato-clock/issues)
-[![GitHub license](https://img.shields.io/github/license/maigamo/tomato-clock)](https://github.com/maigamo/tomato-clock/blob/main/LICENSE)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&color=%23483699&label=downloads&query=%24%5B%22tomato-clock%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)
 
 </div>
